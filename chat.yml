@@ -1,0 +1,57 @@
+---
+- name: Lab 3
+  hosts: myhost_openstack
+  remote_user: ubuntu
+  become: true
+  become_user: root
+  tasks:
+    - name: Import key for mongodb
+      apt_key:
+        url: 'https://www.mongodb.org/static/pgp/server-4.4.asc'
+        state: present
+
+    - name: Add repository for mongodb & install mongodb
+      apt_repository:
+        filename: '/etc/apt/sources.list.d/mongodb-org-4.4.list'
+        repo: 'deb https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.4 multiverse'
+        state: present
+        update_cache: yes
+
+    - name: Install mongodb
+      apt:
+        update_cache: yes
+        name: mongod-org
+        state: latest
+        
+    - name: Install nodejs
+      apt:
+        update_cache: yes
+        name: nodejs
+        state: latest
+                
+    - name: Chdir to install npm for lets-chat
+      ansible.builtin.command:
+        chdir: /home/ubuntu/lets-chat/
+        
+    - name: Install npm
+      apt:
+        update_cache: yes
+        name: npm
+        state: latest
+        
+    - name: Clone repo
+      git:
+        repo: https://github.com/sdelements/lets-chat.git
+        dest: /home/ubuntu/lets-chat/
+        clone: yes
+        update: yes
+        
+    - name: Start mongodb
+      ansible.builtin.service:
+        name: mongod
+        state: restarted
+        
+    - name: Start lets-chat
+      ansible.builtin.command:
+        chdir: /home/ubuntu/lets-chat/
+        cmd: npm start
